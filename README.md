@@ -19,13 +19,20 @@ authentication, an admin dashboard, blog comments and a contact inbox.
 
 | Deliverable | URL |
 | --- | --- |
-| **Front-end (SPA)** | `https://<your-frontend>.vercel.app` |
-| **Back-end (API)** | `https://<your-api>.onrender.com` |
-| API health check | `https://<your-api>.onrender.com/health` |
+| **Front-end (SPA)** | **https://portfolio-blog-web.onrender.com** |
+| **Back-end (API)** | **https://portfolio-blog-api-flto.onrender.com** |
+| API health check | https://portfolio-blog-api-flto.onrender.com/health |
+| Front-end mirror (Vercel) | https://capstone-portfolio-blog.vercel.app |
+| Source code | https://github.com/Su-kaicheng/capstone-portfolio-blog |
 
-> Deployment steps are provided in [Section 10](#10-deployment-guide). After
-> deploying, replace the two URLs above — they are also the links required on
-> Chaoxing.
+> The Render static-site URL is the primary front-end link (reachable from
+> mainland China). The Vercel mirror is a secondary copy because
+> `*.vercel.app` can be blocked by some mainland DNS resolvers. Both builds
+> call the same deployed Render API. Render free instances sleep after
+> inactivity, so the first request may take up to ~30 seconds to wake up.
+>
+> Deployment details and the reproducible steps are in
+> [Section 10](#10-deployment-guide).
 
 ## 2. Demo accounts
 
@@ -370,6 +377,16 @@ Message                       (timestamps)                    ├── body
 
 ## 10. Deployment guide
 
+The project is already deployed with this exact pipeline (see Section 1):
+
+- **Back-end** → Render **Web Service** from the `server/` folder
+  (Singapore, free plan, Node 24).
+- **Front-end** → Render **Static Site** from the `client/` folder
+  (`npm install && npm run build` → `dist/`), plus a Vercel mirror.
+
+Both services are declared in [`render.yaml`](render.yaml), so a Render
+Blueprint can recreate the whole stack from this repository.
+
 ### 10.1 Back-end → Render (Web Service)
 
 1. Push this folder to a GitHub repository (do **not** commit `node_modules` or
@@ -395,30 +412,44 @@ Message                       (timestamps)                    ├── body
 > Render's free tier sleeps after inactivity; the first request may take
 > ~30 seconds to wake up. The React client shows a loading state while waiting.
 
-### 10.2 Front-end → Vercel
+### 10.2 Front-end → Render Static Site (primary) / Vercel (mirror)
 
-1. In Vercel: **Add New → Project**, import the same repository.
+**Render Static Site (used for the live URL in Section 1):**
+
+1. In Render: **New → Static Site**, connect the same repository.
 2. Settings:
    - **Root Directory:** `client`
-   - **Framework Preset:** Vite
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `dist`
-3. Environment variable: `VITE_API_URL` = `https://<service>.onrender.com`
-4. Deploy. `client/vercel.json` rewrites every route to `/index.html`, so deep
-   links such as `/blog/674…` work on refresh.
-5. Update the API's `CLIENT_ORIGIN` to the final Vercel URL and redeploy the API
-   so CORS accepts the browser origin.
+   - **Build Command:** `npm install && npm run build`
+   - **Publish Directory:** `dist`
+3. Environment variable: `VITE_API_URL` = `https://<api-service>.onrender.com`
+4. Deploy, then set the API's `CLIENT_ORIGIN` to the static-site URL and let the
+   API restart so browser requests pass CORS.
+5. Add a SPA rewrite rule so deep links such as `/blog/674…` work on refresh:
+   **Redirects/Rewrites → Add Rule**: Source `/*`, Destination `/index.html`,
+   Action **Rewrite** (also declared in `render.yaml` and applied to the live
+   site through the Render API).
+
+**Vercel mirror (optional, same repository/build):**
+
+1. In Vercel: **Add New → Project**, import the repository.
+2. **Root Directory** `client`, framework **Vite**, build `npm run build`,
+   output `dist`; environment variable `VITE_API_URL` = the deployed API URL.
+3. Deploy. `client/vercel.json` rewrites every route to `/index.html`.
+   (Note: `*.vercel.app` can be blocked in mainland China, which is why the
+   Render static site is the primary link.)
+
 6. Open the deployed site, log in with the admin demo account and confirm the
    dashboard works against the live API.
 
 ## 11. Submission checklist (Chaoxing)
 
-- [ ] Live front-end URL: `https://<your-frontend>.vercel.app`
-- [ ] Live back-end URL: `https://<your-api>.onrender.com`
-- [ ] ZIP named `24998094_苏楷程_CapstoneProject.zip`
-- [ ] ZIP contains `README.md`, `CAPSTONE_REQUIREMENTS.md`, `docs/`, `server/` and `client/`
-- [ ] All `node_modules` folders are excluded from the ZIP
-- [ ] This README's live URLs are updated to the deployed links
+- [x] Live front-end URL: **https://portfolio-blog-web.onrender.com**
+- [x] Live back-end URL: **https://portfolio-blog-api-flto.onrender.com**
+- [x] ZIP named `24998094_苏楷程_CapstoneProject.zip`
+- [x] ZIP contains `README.md`, `CAPSTONE_REQUIREMENTS.md`, `docs/`, `server/` and `client/`
+- [x] All `node_modules` folders are excluded from the ZIP
+- [x] This README's live URLs are updated to the deployed links
+- [x] Source code: https://github.com/Su-kaicheng/capstone-portfolio-blog
 
 Included for the local demo / viva (no extra setup needed):
 
