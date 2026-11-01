@@ -437,3 +437,21 @@ exactly the seed state: **2 users / 3 projects / 3 posts / 3 comments / 1 messag
 
 Remaining open item: **INFO-1** — live deployment URLs are still placeholders; they must be
 filled in after deploying to Vercel (front-end) and Render (back-end) as described in README §10.
+
+---
+
+## 10. Deployment record (lead, 2026-11-01 ~14:05 +08:00)
+
+The code from the verified frozen snapshot (commit `3c2d1e4`) was deployed:
+
+| Component | Platform | URL | Verification |
+| --- | --- | --- | --- |
+| **API** | Render Web Service (Singapore, free, Node 24) | **https://portfolio-blog-api-flto.onrender.com** | `/health` → `200 {"status":"ok","db":"connected"}`; 3 projects + 3 posts returned; admin login returns a JWT; admin inbox returns 1 seeded message; CORS preflight `204` with the deployed SPA origin |
+| **SPA (primary)** | Render Static Site | **https://portfolio-blog-web.onrender.com** | `/`, `/projects`, `/blog`, `/blog/:id`, `/contact`, `/login`, `/register`, `/admin` all `200` with the SPA shell; rewrite `/*` → `/index.html`; bundle contains the deployed API URL; API `GET /api/projects` with the SPA `Origin` returns `200` and `Access-Control-Allow-Origin: https://portfolio-blog-web.onrender.com` |
+| SPA mirror | Vercel | https://capstone-portfolio-blog.vercel.app | Deployment `READY`; `*.vercel.app` is DNS-blocked from mainland networks, so the Render static site is the primary front-end link |
+| Source | GitHub (public) | https://github.com/Su-kaicheng/capstone-portfolio-blog | 92 files pushed |
+
+All interactive UI flows (login, admin project/post CRUD, commenting, contact form, registration) were
+verified against the real API before deployment via the author's Vitest integration suite (10/10) and
+this QA's jsdom SPA probe; the deployed artifacts were verified at the HTTP/asset/API/CORS level from
+the build host. INFO-1 (placeholder live URLs) is resolved.
